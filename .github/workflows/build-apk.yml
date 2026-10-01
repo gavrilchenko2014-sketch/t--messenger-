@@ -1,4 +1,5 @@
-name: Build Android APK
+
+ name: Build Android APK
 
 on:
   workflow_dispatch:
@@ -22,11 +23,21 @@ jobs:
         run: |
           cd unpacked/t-messenger/mobile
           flutter create . --project-name t_messenger --org com.tmessenger --platforms android
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/build.gradle.kts")
+          if not p.exists():
+              p = Path("android/app/build.gradle")
+          text = p.read_text()
+          text = text.replace("compileSdk = flutter.compileSdkVersion", "compileSdk = 36")
+          text = text.replace("compileSdkVersion flutter.compileSdkVersion", "compileSdkVersion 36")
+          p.write_text(text)
+          print(p.read_text())
+          PY
           flutter pub get
           flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:3000
 
       - uses: actions/upload-artifact@v4
         with:
           name: t-messenger-apk
-          path: unpacked/t-messenger/mobile/build/app/outputs/flutter-apk/app-release.apk
-        
+          path: unpacked/t-messenger/mobile/build/app/outputs/flutter-apk/app-release.apk       

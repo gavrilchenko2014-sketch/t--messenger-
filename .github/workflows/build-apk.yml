@@ -1,0 +1,32 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Unpack zip
+        run: unzip -o t-messenger.zip -d unpacked
+
+      - name: Build APK
+        run: |
+          cd unpacked/t-messenger/mobile
+          flutter create . --project-name t_messenger --org com.tmessenger --platforms android
+          flutter pub get
+          flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:3000
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t-messenger-apk
+          path: unpacked/t-messenger/mobile/build/app/outputs/flutter-apk/app-release.apk
+        
